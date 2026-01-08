@@ -1,7 +1,6 @@
 #include "raylib.h"
 #include <array>
 #include <iostream>
-#include <stdexcept>
 
 using namespace std;
 
@@ -28,25 +27,32 @@ struct Player {
 struct Block {
     public:
 
-    int id;
     string name;
     Color color;
     bool placeMidAir;
+    int width;
+    int height;
+    bool passableFromBelow;
+    int id;
 
-    Block (string name, Color color, bool placeMidAir, int id) {
+    Block (string name, Color color, bool placeMidAir, int width, int height, bool passableFromBelow, int id) {
         this -> name = name;
         this->color = color;
         this->placeMidAir = placeMidAir;
-        this-> id = id;
+        this->height = height;
+        this->width = width;
+        this->passableFromBelow = passableFromBelow;
+        this->id = id;
     }
 
     Block() {}
 };
 
 void FillWorldBlocks (array<Block, 10>& blocColors) {
-    blocColors.at(0) = Block("Nothing", BLUE, true, 1);
-    blocColors.at(1) = Block("Dirt", BROWN, false, 2);
-    blocColors.at(2) = Block("Player", ORANGE, true, 3);
+    blocColors.at(0) = Block("Nothing", BLUE, true, 20, 20, true, 1);
+    blocColors.at(1) = Block("Dirt", BROWN, false, 20, 20, false, 2);
+    blocColors.at(2) = Block("Player", ORANGE, true, 20, 20, true, 3);
+    blocColors.at(3) = Block("Platform", BROWN, false, 20, 3, true, 4);
 }
 
 // void FillBlockColors (array<Color, 10>& blocColors) {
@@ -146,17 +152,14 @@ int main () {
     SetTargetFPS(60);
 
     while (!WindowShouldClose()) {
-        BeginDrawing();
-        ClearBackground(blackgrowndColor);
-
         verticalSpeed += gravity;
 
         int predictMoveX = player.posX;
         int predictMoveY = player.posY;
 
         if (IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W) || IsKeyPressed(KEY_SPACE)) {
-                verticalSpeed = -jumpHeight;
-                jumped = true;
+            verticalSpeed = -jumpHeight;
+            jumped = true;
         }
 
         if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D)) {
@@ -173,7 +176,6 @@ int main () {
         int mouseGridY = ((GetMouseY() + player.posY - screenHeight / 2) + blockWidth) / 20;
 
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && IsCursorOnScreen()) {
-
             // cout << "\nmouseGridX: " << mouseGridX << "\nmouseGridY: " << mouseGridY;
             // cout << "\nplayerPosGridX: " << player.posX << "\nplayerPosGridY: " << player.posY << "\n";
             if (world.at(mouseGridY).at(mouseGridX) != 0) {
@@ -183,7 +185,6 @@ int main () {
                 world.at(mouseGridY).at(mouseGridX) = 1;
             }
         }
-
 
         if (verticalSpeed > 10) {
             verticalSpeed = 10;
@@ -195,7 +196,6 @@ int main () {
         predictMoveY += verticalSpeed;
 
         if (predictMoveX > player.posX) {
-
             //Check X colision
             //Check 4 blocks Y and 3 blocks X
             int predictMoveXRight = predictMoveX + 40;
@@ -203,7 +203,7 @@ int main () {
                 if (world.at(j / 20).at(predictMoveXRight / 20) != 0) predictMoveX = (predictMoveXRight / 20) * 20 - 40;
             }
         }
-        if (predictMoveX < player.posX) {
+        else if (predictMoveX < player.posX) {
             //Look left
             for (int j = player.posY; j < player.posY + blockWidth * 3; j ++) {
                 if (world.at(j / 20).at(predictMoveX / 20) != 0) predictMoveX = (predictMoveX / 20) * 20 + 20;
@@ -220,16 +220,20 @@ int main () {
                 }
             }
         }
-        if (predictMoveY < player.posY) {
+        else if (predictMoveY < player.posY) {
             //Look up
             // 3 blocks. below the player, 1 right and 2 right
             for (int j = player.posX; j < player.posX + blockWidth * 2; j ++) {
-                if (world.at(predictMoveY / 20).at(j / 20) != 0) predictMoveY = (predictMoveY / 20) * 20 + 20;
+                int blockId = world.at(predictMoveY / 20).at(j / 20);
+                if (blockId != 0 && !worldBlocks.at(blockId).passableFromBelow) predictMoveY = (predictMoveY / 20) * 20 + 20;
             }
         }
 
         player.posX = predictMoveX;
         player.posY = predictMoveY;
+
+        BeginDrawing();
+        ClearBackground(blackgrowndColor);
 
         DrawWorld(world, player, worldBlocks);
 
