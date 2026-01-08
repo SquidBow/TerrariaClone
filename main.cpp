@@ -128,9 +128,11 @@ void DrawInventory (array<array<Block, 10>, 6>& inventory, bool isInventoryOpen,
         int posX = blockWidth;
         for (int i = 0; i < inventory.at(0).size(); i ++) {
             if (i == selected) {
+                DrawRectangle(posX, blockWidth, blockWidth * 2, blockWidth * 2, Fade(DARKBLUE, 0.5f));
                 DrawRectangleLines(posX, blockWidth, blockWidth * 2, blockWidth * 2, GOLD);
             }
             else {
+                DrawRectangle(posX, blockWidth, blockWidth * 2, blockWidth * 2, Fade(DARKBLUE, 0.5f));
                 DrawRectangleLines(posX, blockWidth, blockWidth * 2, blockWidth * 2, WHITE);
             }
 
