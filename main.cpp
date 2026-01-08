@@ -173,6 +173,7 @@ int main () {
     int playerSpeedMod = 3;
     float verticalSpeed = 0;
     bool jumped = false;
+    int jumpBufferFrames = 0;
 
     bool isInventoryOpen = false;
     int selectedInventorySlot = 0;
@@ -183,12 +184,22 @@ int main () {
     while (!WindowShouldClose()) {
         verticalSpeed += gravity;
 
+        if (jumpBufferFrames > 0) {
+            jumpBufferFrames --;
+        }
+
         int predictMoveX = player.posX;
         int predictMoveY = player.posY;
 
-        if ((IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W) || IsKeyPressed(KEY_SPACE)) && !jumped) {
-            verticalSpeed = -jumpHeight;
+        if ((IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W) || IsKeyPressed(KEY_SPACE)) /*&& !jumped*/) {
+            // verticalSpeed = -jumpHeight;
+            jumpBufferFrames = 10;
             jumped = true;
+        }
+
+        if (jumpBufferFrames > 0 && !jumped) {
+            verticalSpeed = -jumpHeight;
+            jumpBufferFrames = 0;
         }
 
         if (IsKeyDown(KEY_RIGHT) || IsKeyDown(KEY_D)) {
