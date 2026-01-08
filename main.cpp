@@ -1,5 +1,4 @@
 #include "raylib.h"
-#include <algorithm>
 #include <array>
 #include <iostream>
 
@@ -124,25 +123,50 @@ void DrawWorld (const array<array<int, 1000>, 1000>& world, const Player& player
 void DrawInventory (array<array<Block, 10>, 6>& inventory, bool isInventoryOpen, int selected) {
     int difference = blockWidth * 3;
 
-    if (!isInventoryOpen) {
-        int posX = blockWidth;
-        for (int i = 0; i < inventory.at(0).size(); i ++) {
-            if (i == selected) {
-                DrawRectangle(posX, blockWidth, blockWidth * 2, blockWidth * 2, Fade(DARKBLUE, 0.5f));
-                DrawRectangleLines(posX, blockWidth, blockWidth * 2, blockWidth * 2, GOLD);
+    int posX = blockWidth;
+    int posY = blockWidth;
+    for (int i = 0; i < inventory.at(0).size(); i ++) {
+        if (i == selected) {
+            DrawRectangle(posX, posY, blockWidth * 2, blockWidth * 2, Fade(DARKBLUE, 0.5f));
+            DrawRectangleLines(posX, posY, blockWidth * 2, blockWidth * 2, GOLD);
+        }
+        else {
+            DrawRectangle(posX, posY, blockWidth * 2, blockWidth * 2, Fade(DARKBLUE, 0.5f));
+            DrawRectangleLines(posX, posY, blockWidth * 2, blockWidth * 2, WHITE);
+        }
+
+        Block block = inventory.at(0).at(i);
+        int offcet = ((blockWidth * 2) - block.height) / 2;
+
+        // For platform = 40 - 4 = 36 / 2 = 18. Pos = 20 + 18
+        DrawRectangle(posX + blockWidth / 2, posY + offcet, block.width, block.height, block.color);
+
+        posX += difference;
+    }
+
+    if (isInventoryOpen) {
+        for (int j = 1; j < inventory.size(); j ++) {
+            posX = blockWidth;
+            posY += difference;
+
+            for (int i = 0; i < inventory.at(j).size(); i ++) {
+                if (i == selected) {
+                    DrawRectangle(posX, posY, blockWidth * 2, blockWidth * 2, Fade(DARKBLUE, 0.5f));
+                    DrawRectangleLines(posX, posY, blockWidth * 2, blockWidth * 2, GOLD);
+                }
+                else {
+                    DrawRectangle(posX, posY, blockWidth * 2, blockWidth * 2, Fade(DARKBLUE, 0.5f));
+                    DrawRectangleLines(posX, posY, blockWidth * 2, blockWidth * 2, WHITE);
+                }
+
+                Block block = inventory.at(j).at(i);
+                int offcet = ((blockWidth * 2) - block.height) / 2;
+
+                // For platform = 40 - 4 = 36 / 2 = 18. Pos = 20 + 18
+                DrawRectangle(posX + blockWidth / 2, posY + offcet, block.width, block.height, block.color);
+
+                posX += difference;
             }
-            else {
-                DrawRectangle(posX, blockWidth, blockWidth * 2, blockWidth * 2, Fade(DARKBLUE, 0.5f));
-                DrawRectangleLines(posX, blockWidth, blockWidth * 2, blockWidth * 2, WHITE);
-            }
-
-            Block block = inventory.at(0).at(i);
-            int offcet = ((blockWidth * 2) - block.height) / 2;
-
-            // For platform = 40 - 4 = 36 / 2 = 18. Pos = 20 + 18
-            DrawRectangle(posX + blockWidth / 2, blockWidth + offcet, block.width, block.height, block.color);
-
-            posX += difference;
         }
     }
 }
@@ -186,6 +210,7 @@ int main () {
 
     InitWindow(blocksInARow * blockWidth, blocksInACol * blockWidth, "Terraria clone");
     SetTargetFPS(60);
+    SetExitKey(KEY_NULL);
 
     while (!WindowShouldClose()) {
         verticalSpeed += gravity;
