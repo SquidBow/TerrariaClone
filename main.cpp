@@ -135,9 +135,9 @@ void DrawInventory (array<array<Block, 10>, 6>& inventory, bool isInventoryOpen,
             }
 
             Block block = inventory.at(0).at(i);
-            int offcet = ((blockWidth * 2) - block.width) / 2;
+            int offcet = ((blockWidth * 2) - block.height) / 2;
 
-            // For platform = 40 - 4 = 36 / 2 = 18
+            // For platform = 40 - 4 = 36 / 2 = 18. Pos = 20 + 18
             DrawRectangle(posX + blockWidth / 2, blockWidth + offcet, block.width, block.height, block.color);
 
             posX += difference;
