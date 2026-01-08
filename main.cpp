@@ -1,4 +1,5 @@
 #include "raylib.h"
+#include <algorithm>
 #include <array>
 #include <iostream>
 
@@ -120,6 +121,23 @@ void DrawWorld (const array<array<int, 1000>, 1000>& world, const Player& player
     }
 }
 
+void DrawInventory (array<array<Block, 10>, 6>& inventory, bool isInventoryOpen, int selected) {
+    int difference = blockWidth * 3;
+
+    if (!isInventoryOpen) {
+        int posX = blockWidth;
+        for (int i = 0; i < inventory.at(0).size(); i ++) {
+            if (i == selected) {
+                DrawRectangleLines(posX, blockWidth, blockWidth * 2, blockWidth * 2, GOLD);
+            }
+            else {
+                DrawRectangleLines(posX, blockWidth, blockWidth * 2, blockWidth * 2, WHITE);
+            }
+            posX += difference;
+        }
+    }
+}
+
 //Player Offcet = object pos - player pos
 void DrawObjectWithPlayerOffcet (int objectPosX, int objectPosY, int width, int height, Color color, Player& player) {
     int playerOffcerX = objectPosX - player.posX;
@@ -139,6 +157,8 @@ int main () {
     array<Block, 10> worldBlocks;
     FillWorldBlocks(worldBlocks);
 
+    array<array<Block, 10>, 6> inventory;
+
     Player player (10020, 9900);
 
     createWorld(world, player);
@@ -147,6 +167,9 @@ int main () {
     int playerSpeedMod = 3;
     float verticalSpeed = 0;
     bool jumped = false;
+
+    bool isInventoryOpen = false;
+    int selectedInventorySlot = 0;
 
     InitWindow(blocksInARow * blockWidth, blocksInACol * blockWidth, "Terraria clone");
     SetTargetFPS(60);
@@ -169,6 +192,41 @@ int main () {
         if (IsKeyDown(KEY_LEFT) || IsKeyDown(KEY_A)) {
             lastDirection = 'l';
             predictMoveX -= playerSpeedMod;
+        }
+
+        if (IsKeyPressed(KEY_ESCAPE)) {
+            isInventoryOpen = !isInventoryOpen;
+        }
+
+        if (IsKeyPressed(KEY_ONE)) {
+            selectedInventorySlot = 0;
+        }
+        else if (IsKeyPressed(KEY_TWO)) {
+            selectedInventorySlot = 1;
+        }
+        else if (IsKeyPressed(KEY_THREE)) {
+            selectedInventorySlot = 2;
+        }
+        else if (IsKeyPressed(KEY_FOUR)) {
+            selectedInventorySlot = 3;
+        }
+        else if (IsKeyPressed(KEY_FIVE)) {
+            selectedInventorySlot = 4;
+        }
+        else if (IsKeyPressed(KEY_SIX)) {
+            selectedInventorySlot = 5;
+        }
+        else if (IsKeyPressed(KEY_SEVEN)) {
+            selectedInventorySlot = 6;
+        }
+        else if (IsKeyPressed(KEY_EIGHT)) {
+            selectedInventorySlot = 7;
+        }
+        else if (IsKeyPressed(KEY_NINE)) {
+            selectedInventorySlot = 8;
+        }
+        else if (IsKeyPressed(KEY_ZERO)) {
+            selectedInventorySlot = 9;
         }
 
         // Get mouse pos
@@ -236,6 +294,7 @@ int main () {
         ClearBackground(blackgrowndColor);
 
         DrawWorld(world, player, worldBlocks);
+        DrawInventory(inventory, isInventoryOpen, selectedInventorySlot);
 
         EndDrawing();
     }
