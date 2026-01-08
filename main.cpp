@@ -186,7 +186,7 @@ int main () {
         int predictMoveX = player.posX;
         int predictMoveY = player.posY;
 
-        if (IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W) || IsKeyPressed(KEY_SPACE)) {
+        if ((IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W) || IsKeyPressed(KEY_SPACE)) && !jumped) {
             verticalSpeed = -jumpHeight;
             jumped = true;
         }
