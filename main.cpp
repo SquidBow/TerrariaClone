@@ -133,6 +133,9 @@ void DrawInventory (array<array<Block, 10>, 6>& inventory, bool isInventoryOpen,
             else {
                 DrawRectangleLines(posX, blockWidth, blockWidth * 2, blockWidth * 2, WHITE);
             }
+
+            DrawRectangle(posX + blockWidth / 2, blockWidth + blockWidth / 2, inventory.at(0).at(i).width, inventory.at(0).at(i).height, inventory.at(0).at(i).color);
+
             posX += difference;
         }
     }
@@ -158,6 +161,9 @@ int main () {
     FillWorldBlocks(worldBlocks);
 
     array<array<Block, 10>, 6> inventory;
+
+    inventory.at(0).at(0) = Block("Dirt", BROWN, false, 20, 20, false, 2);
+    inventory.at(0).at(1) = Block("Platform", BROWN, false, 20, 3, true, 4);
 
     Player player (10020, 9900);
 
