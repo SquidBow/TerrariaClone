@@ -1,6 +1,7 @@
 #include "raylib.h"
 #include <array>
 #include <iostream>
+#include <stdexcept>
 
 using namespace std;
 
@@ -14,7 +15,7 @@ const float jumpHeight = 17;
 
 Color blackgrowndColor = BLUE;
 
-class Player {
+struct Player {
     public:
 
     // Top left corner
@@ -24,11 +25,35 @@ class Player {
     Player (int posX, int posY) : posX(posX), posY(posY) {}
 };
 
-void FillBlockColors (array<Color, 10>& blocColors) {
-    blocColors [0] = BLUE;
-    blocColors [1] = BROWN;
-    blocColors [2] = ORANGE;
+struct Block {
+    public:
+
+    int id;
+    string name;
+    Color color;
+    bool placeMidAir;
+
+    Block (string name, Color color, bool placeMidAir, int id) {
+        this -> name = name;
+        this->color = color;
+        this->placeMidAir = placeMidAir;
+        this-> id = id;
+    }
+
+    Block() {}
+};
+
+void FillWorldBlocks (array<Block, 10>& blocColors) {
+    blocColors.at(0) = Block("Nothing", BLUE, true, 1);
+    blocColors.at(1) = Block("Dirt", BROWN, false, 2);
+    blocColors.at(2) = Block("Player", ORANGE, true, 3);
 }
+
+// void FillBlockColors (array<Color, 10>& blocColors) {
+//     blocColors [0] = BLUE;
+//     blocColors [1] = BROWN;
+//     blocColors [2] = ORANGE;
+// }
 
 void createWorld (array<array<int, 1000>, 1000>& world, Player& player) {
     // i == y
@@ -53,7 +78,7 @@ void createWorld (array<array<int, 1000>, 1000>& world, Player& player) {
     world.at(player.posY/20 - 8).at(player.posX/20 - 3) = 1;
 }
 
-void DrawWorld (const array<array<int, 1000>, 1000>& world, const Player& player, array<Color, 10>& blockColors) {
+void DrawWorld (const array<array<int, 1000>, 1000>& world, const Player& player, array<Block, 10>& worldBlocks) {
 
     //Player pos / 20 is the player grid position
     int playerGridX = player.posX / 20;
@@ -67,8 +92,6 @@ void DrawWorld (const array<array<int, 1000>, 1000>& world, const Player& player
 
         // i = x
         for (int i = 0; i < blocksInARow + 1; i ++) {
-
-
             //Now take the blocks
             //That is X. Start at some before the player
             //40 blocks, 19 - player(2) - 19;
@@ -82,7 +105,7 @@ void DrawWorld (const array<array<int, 1000>, 1000>& world, const Player& player
             int camY = j * blockWidth - playerOffcetY;
 
 
-            DrawRectangle(camX, camY, blockWidth, blockWidth, blockColors.at(world.at(worldY).at(worldX)));
+            DrawRectangle(camX, camY, blockWidth, blockWidth, worldBlocks.at(world.at(worldY).at(worldX)).color);
 
         }
 
@@ -104,8 +127,11 @@ void DrawObjectWithPlayerOffcet (int objectPosX, int objectPosY, int width, int 
 
 int main () {
     array<array<int, 1000>, 1000> world {0};
-    array<Color, 10> blockColors;
-    FillBlockColors(blockColors);
+    // array<Color, 10> blockColors;
+    // FillBlockColors(blockColors);
+
+    array<Block, 10> worldBlocks;
+    FillWorldBlocks(worldBlocks);
 
     Player player (10020, 9900);
 
@@ -205,7 +231,7 @@ int main () {
         player.posX = predictMoveX;
         player.posY = predictMoveY;
 
-        DrawWorld(world, player, blockColors);
+        DrawWorld(world, player, worldBlocks);
 
         EndDrawing();
     }
