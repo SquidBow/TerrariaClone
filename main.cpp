@@ -50,10 +50,10 @@ struct Block {
 };
 
 void FillWorldBlocks (array<Block, 10>& blocColors) {
-    blocColors.at(0) = Block("Nothing", BLUE, true, 20, 20, true, 1);
-    blocColors.at(1) = Block("Dirt", BROWN, false, 20, 20, false, 2);
-    blocColors.at(2) = Block("Player", ORANGE, true, 20, 20, true, 3);
-    blocColors.at(3) = Block("Platform", BROWN, false, 20, 3, true, 4);
+    blocColors.at(0) = Block("Nothing", BLUE, true, 20, 20, true, 0);
+    blocColors.at(1) = Block("Dirt", BROWN, false, 20, 20, false, 1);
+    blocColors.at(2) = Block("Player", ORANGE, true, 20, 20, true, 2);
+    blocColors.at(3) = Block("Platform", BROWN, false, 20, 4, true, 3);
 }
 
 // void FillBlockColors (array<Color, 10>& blocColors) {
@@ -111,8 +111,8 @@ void DrawWorld (const array<array<int, 1000>, 1000>& world, const Player& player
             int camX = i * blockWidth - playerOffcetX;
             int camY = j * blockWidth - playerOffcetY;
 
-
-            DrawRectangle(camX, camY, blockWidth, blockWidth, worldBlocks.at(world.at(worldY).at(worldX)).color);
+            Block block = worldBlocks.at(world.at(worldY).at(worldX));
+            DrawRectangle(camX, camY, block.width, block.height, block.color);
 
         }
 
@@ -134,7 +134,11 @@ void DrawInventory (array<array<Block, 10>, 6>& inventory, bool isInventoryOpen,
                 DrawRectangleLines(posX, blockWidth, blockWidth * 2, blockWidth * 2, WHITE);
             }
 
-            DrawRectangle(posX + blockWidth / 2, blockWidth + blockWidth / 2, inventory.at(0).at(i).width, inventory.at(0).at(i).height, inventory.at(0).at(i).color);
+            Block block = inventory.at(0).at(i);
+            int offcet = ((blockWidth * 2) - block.width) / 2;
+
+            // For platform = 40 - 4 = 36 / 2 = 18
+            DrawRectangle(posX + blockWidth / 2, blockWidth + offcet, block.width, block.height, block.color);
 
             posX += difference;
         }
@@ -162,8 +166,8 @@ int main () {
 
     array<array<Block, 10>, 6> inventory;
 
-    inventory.at(0).at(0) = Block("Dirt", BROWN, false, 20, 20, false, 2);
-    inventory.at(0).at(1) = Block("Platform", BROWN, false, 20, 3, true, 4);
+    inventory.at(0).at(0) = Block("Dirt", BROWN, false, 20, 20, false, 1);
+    inventory.at(0).at(1) = Block("Platform", BROWN, false, 20, 4, true, 3);
 
     Player player (10020, 9900);
 
@@ -193,7 +197,7 @@ int main () {
 
         if ((IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W) || IsKeyPressed(KEY_SPACE)) /*&& !jumped*/) {
             // verticalSpeed = -jumpHeight;
-            jumpBufferFrames = 10;
+            jumpBufferFrames = 7;
             jumped = true;
         }
 
@@ -257,7 +261,8 @@ int main () {
                 world.at(mouseGridY).at(mouseGridX) = 0;
             }
             else {
-                world.at(mouseGridY).at(mouseGridX) = 1;
+                // world.at(mouseGridY).at(mouseGridX) = 1;
+                world.at(mouseGridY).at(mouseGridX) = inventory.at(0).at(selectedInventorySlot).id;
             }
         }
 
