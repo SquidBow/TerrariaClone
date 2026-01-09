@@ -1,5 +1,6 @@
 #include "raylib.h"
 #include <array>
+#include <cstdint>
 #include <iostream>
 
 using namespace std;
@@ -49,10 +50,10 @@ struct Block {
 };
 
 void FillWorldBlocks (array<Block, 10>& blocColors) {
-    blocColors.at(0) = Block("Nothing", BLUE, true, 20, 20, true, 0);
-    blocColors.at(1) = Block("Dirt", BROWN, false, 20, 20, false, 1);
-    blocColors.at(2) = Block("Player", ORANGE, true, 20, 20, true, 2);
-    blocColors.at(3) = Block("Platform", BROWN, false, 20, 4, true, 3);
+    blocColors.at(0) = Block("Nothing", BLUE, true, blockWidth, blockWidth, true, 0);
+    blocColors.at(1) = Block("Dirt", BROWN, false, blockWidth, blockWidth, false, 1);
+    blocColors.at(2) = Block("Player", ORANGE, true, blockWidth, blockWidth, true, 2);
+    blocColors.at(3) = Block("Platform", BROWN, false, blockWidth, 4, true, 3);
 }
 
 // void FillBlockColors (array<Color, 10>& blocColors) {
@@ -74,31 +75,44 @@ void createWorld (array<array<int, 1000>, 1000>& world, Player& player) {
     }
 
 
-    world.at(player.posY/20).at(player.posX/20 + 3) = 1;
-    world.at(player.posY/20 - 1).at(player.posX/20 + 3) = 1;
-    world.at(player.posY/20 + 1).at(player.posX/20 + 3) = 1;
+    world.at(player.posY/blockWidth).at(player.posX/blockWidth + 3) = 1;
+    world.at(player.posY/blockWidth - 1).at(player.posX/blockWidth + 3) = 1;
+    world.at(player.posY/blockWidth + 1).at(player.posX/blockWidth + 3) = 1;
 
-    world.at(player.posY/20 - 8).at(player.posX/20 + 3) = 1;
+    world.at(player.posY/blockWidth - 8).at(player.posX/blockWidth + 3) = 1;
 
 
-    world.at(player.posY/20 - 8).at(player.posX/20 - 3) = 1;
+    world.at(player.posY/blockWidth - 8).at(player.posX/blockWidth - 3) = 1;
 }
 
-void DrawWorld (const array<array<int, 1000>, 1000>& world, const Player& player, array<Block, 10>& worldBlocks) {
+void DrawWorld (const array<array<int, 1000>, 1000>& world, const Player& player, array<Block, 10>& worldBlocks/* , int8_t ofScreen*/) {
 
-    bool ofScreenLeft = player.posX < screenWidht / 2;
+    int8_t ofScreen;
+
+    if (player.posX < screenWidht / 2) {
+        ofScreen = -1;
+    }
+    else if (player.posX > world.at(0).size() * blockWidth - (screenWidht / 2) - blockWidth - 1) {
+        ofScreen = 1;
+    }
+    else {
+        ofScreen = 0;
+    }
 
     //Player pos / 20 is the player grid position
     int playerGridX;
-    int playerGridY = player.posY / 20;
-    int playerOffcetX = player.posX % 20;
-    int playerOffcetY = player.posY % 20;
+    int playerGridY = player.posY / blockWidth;
+    int playerOffcetX = player.posX % blockWidth;
+    int playerOffcetY = player.posY % blockWidth;
 
-    if (ofScreenLeft) {
-        playerGridX = (screenWidht / 2) / 20;
+    if (ofScreen == -1) {
+        playerGridX = (screenWidht / 2) / blockWidth;
+    }
+    else if (ofScreen == 1) {
+        playerGridX = (world.at(0).size() * blockWidth - (screenWidht / 2) - blockWidth * 2) / blockWidth;
     }
     else {
-        playerGridX = player.posX / 20;
+        playerGridX = player.posX / blockWidth;
     }
 
     //j = y
@@ -108,8 +122,11 @@ void DrawWorld (const array<array<int, 1000>, 1000>& world, const Player& player
         for (int i = 0; i < blocksInARow + 1; i ++) {
             int blockPosX;
 
-            if (ofScreenLeft) {
+            if (ofScreen == -1) {
                 blockPosX = i * blockWidth;
+            }
+            else if (ofScreen == 1) {
+                blockPosX = i * blockWidth - blockWidth;
             }
             else {
                 blockPosX = i * blockWidth - playerOffcetX;
@@ -129,15 +146,38 @@ void DrawWorld (const array<array<int, 1000>, 1000>& world, const Player& player
 
             Block block = worldBlocks.at(world.at(worldY).at(worldX));
             DrawRectangle(blockPosX, blockPosY, block.width, block.height, block.color);
+
+            // cout << "Offscreen: " << (int)ofScreen << "\n";
+            // cout << "Drawing block: " << i << "\n";
         }
 
-        if (ofScreenLeft) {
-            DrawRectangle(player.posX - blockWidth, screenHeight / 2 - blockWidth * 1.5 + 10, blockWidth * 2, blockWidth * 3, BLACK);
+        int playerX;
+
+        if (ofScreen == -1) {
+            playerX = player.posX - blockWidth;
+        }
+        else if (ofScreen == 1) {
+            playerX = (player.posX - (world.at(0).size() * blockWidth)) + screenWidht;
         }
         else {
-            //Draw player on top
-            DrawRectangle(screenWidht / 2 - blockWidth, screenHeight / 2 - blockWidth * 1.5 + 10, blockWidth * 2, blockWidth * 3, BLACK);
+            playerX = screenWidht / 2 - blockWidth;
         }
+
+        // cout << "Drawing player at x:" << playerX << "\n";
+        // cout << "Global player x: " << player.posX << "\n";
+
+        // if (ofScreen == -1) {
+        //     DrawRectangle(playerX, screenHeight / 2 - blockWidth * 1.5 + 10, blockWidth * 2, blockWidth * 3, BLACK);
+        // }
+        // else if (ofScreen == 1) {
+        //     DrawRectangle(playerX, screenHeight / 2 - blockWidth * 1.5 + 10, blockWidth * 2, blockWidth * 3, BLACK);
+        // }
+        // else {
+        //     //Draw player on top
+        //     DrawRectangle(playerX, screenHeight / 2 - blockWidth * 1.5 + 10, blockWidth * 2, blockWidth * 3, BLACK);
+        // }
+
+        DrawRectangle(playerX, screenHeight / 2 - blockWidth * 1.5 + 10, blockWidth * 2, blockWidth * 3, BLACK);
     }
 }
 
@@ -159,7 +199,7 @@ void DrawInventory (array<array<Block, 10>, 6>& inventory, bool isInventoryOpen,
         Block block = inventory.at(0).at(i);
         int offcet = ((blockWidth * 2) - block.height) / 2;
 
-        // For platform = 40 - 4 = 36 / 2 = 18. Pos = 20 + 18
+        // For platform = 40 - 4 = 36 / 2 = 18. Pos = blockWidth + 18
         DrawRectangle(posX + blockWidth / 2, posY + offcet, block.width, block.height, block.color);
 
         posX += difference;
@@ -213,15 +253,14 @@ int main () {
 
     array<array<Block, 10>, 6> inventory;
 
-    inventory.at(0).at(0) = Block("Dirt", BROWN, false, 20, 20, false, 1);
-    inventory.at(0).at(1) = Block("Platform", BROWN, false, 20, 4, true, 3);
+    inventory.at(0).at(0) = Block("Dirt", BROWN, false, blockWidth, blockWidth, false, 1);
+    inventory.at(0).at(1) = Block("Platform", BROWN, false, blockWidth, 4, true, 3);
 
-    Player player (500, 9900);
+    Player player (19500, 9900);
 
     createWorld(world, player);
 
     char lastDirection = 'n';
-    int playerSpeedMod = 3;
     float verticalSpeed = 0;
     bool jumped = false;
     int jumpBufferFrames = 0;
@@ -229,10 +268,11 @@ int main () {
     bool isInventoryOpen = false;
     int selectedInventorySlot = 0;
 
-    bool isLeft = false;
+    int8_t ofScreen = 0;
 
     InitWindow(blocksInARow * blockWidth, blocksInACol * blockWidth, "Terraria clone");
     SetTargetFPS(60);
+    int playerSpeedMod = 5;
     SetExitKey(KEY_NULL);
 
     while (!WindowShouldClose()) {
@@ -310,30 +350,63 @@ int main () {
 
         predictMoveY += verticalSpeed;
 
+        // cout << "Player posX: " << player.posX << "\n";
+        // cout << "Predicted player posX: " << predictMoveX << "\n";
+
         if (predictMoveX > player.posX) {
-            //Check X colision
-            //Check 4 blocks Y and 3 blocks X
-            int predictMoveXRight = predictMoveX + 40;
-            for (int j = player.posY; j < player.posY + blockWidth * 3; j ++) {
-                if (world.at(j / 20).at(predictMoveXRight / 20) != 0) predictMoveX = (predictMoveXRight / 20) * 20 - 40;
+
+            // 1000 * 20 = 20000 - 1
+            if (predictMoveX > world.at(0).size() * blockWidth - blockWidth * 2 - 1) {
+                predictMoveX = world.at(0).size() * blockWidth - blockWidth * 2 - 1;
             }
+            else {
+                //Check X colision
+                //Check 4 blocks Y and 3 blocks X
+                int predictMoveXRight = predictMoveX + blockWidth * 2;
+                for (int j = player.posY; j < player.posY + blockWidth * 3; j ++) {
+
+                    if (world.at(j / 20).at(predictMoveXRight / 20) != 0) {
+                        predictMoveX = (predictMoveXRight / blockWidth) * blockWidth - blockWidth * 2;
+                    }
+                    // else if (predictMoveXRight > world.at(0).size() * blockWidth - 4) {
+                        // cout << "Player on the right" << "\n";
+                        // predictMoveX = world.at(0).size() * blockWidth - blockWidth * 2 - 4;
+                        // predictMoveX = 19950;
+                    // }
+                }
+            }
+
+            // if (player.posX > world.at(0).size() * blockWidth - (screenWidht / 2) - blockWidth) {
+            //     ofScreen = 1;
+            // }
+            // else if (player.posX < screenWidht / 2) {
+            //     ofScreen = -1;
+            // }
+            // else {
+            //     ofScreen = 0;
+            // }
         }
         else if (predictMoveX < player.posX) {
             //Look left
             for (int j = player.posY; j < player.posY + blockWidth * 3; j ++) {
-                if (world.at(j / 20).at(predictMoveX / 20) != 0) {
-                    predictMoveX = (predictMoveX / 20) * 20 + 20;
+                if (world.at(j / blockWidth).at(predictMoveX / blockWidth) != 0) {
+                    predictMoveX = (predictMoveX / blockWidth) * blockWidth + blockWidth;
                 }
                 else if (predictMoveX - blockWidth < 0) {
                     predictMoveX = blockWidth;
                 }
 
-                if (player.posX < screenWidht / 2) {
-                    isLeft = true;
-                }
-                else {
-                    isLeft = false;
-                }
+                // if (player.posX < screenWidht / 2) {
+                //     ofScreen = -1;
+                // }
+
+                // else if (player.posX + 3 > world.at(0).size() * blockWidth - (screenWidht / 2) - blockWidth) {
+                //     ofScreen = 1;
+                // }
+
+                // else {
+                //     ofScreen = 0;
+                // }
             }
         }
 
@@ -341,8 +414,8 @@ int main () {
             int predictMoveYDown = predictMoveY + blockWidth * 3;
             // 3 blocks. below the player, 1 right and 2 right
             for (int j = player.posX; j < player.posX + blockWidth * 2; j ++) {
-                if (world.at(predictMoveYDown / 20).at(j / 20) != 0) {
-                    predictMoveY = (predictMoveYDown / 20) * 20 - 60;
+                if (world.at(predictMoveYDown / blockWidth).at(j / blockWidth) != 0) {
+                    predictMoveY = (predictMoveYDown / blockWidth) * blockWidth - blockWidth * 3;
                     jumped = false;
                 }
             }
@@ -351,7 +424,7 @@ int main () {
             //Look up
             // 3 blocks. below the player, 1 right and 2 right
             for (int j = player.posX; j < player.posX + blockWidth * 2; j ++) {
-                int blockId = world.at(predictMoveY / 20).at(j / 20);
+                int blockId = world.at(predictMoveY / blockWidth).at(j / blockWidth);
                 if (blockId != 0 && !worldBlocks.at(blockId).passableFromBelow) predictMoveY = (predictMoveY / 20) * 20 + 20;
             }
         }
@@ -359,14 +432,19 @@ int main () {
         int mouseGridX;
 
         // Get mouse pos
-        if (isLeft) {
-            mouseGridX = (GetMouseX() + blockWidth) / 20;
+        if (ofScreen == -1) {
+            // cout << "OfScreen is -1" << "\n";
+            mouseGridX = (GetMouseX() + blockWidth) / blockWidth;
+        }
+        else if (ofScreen == 1) {
+            // cout << "OfScreen is 1" << "\n";
         }
         else {
-            mouseGridX = ((GetMouseX() + player.posX - screenWidht / 2) + blockWidth) / 20;
+            // cout << "OfScreen is 0" << "\n";
+            mouseGridX = ((GetMouseX() + player.posX - screenWidht / 2) + blockWidth) / blockWidth;
         }
 
-        int mouseGridY = ((GetMouseY() + player.posY - screenHeight / 2) + blockWidth) / 20;
+        int mouseGridY = ((GetMouseY() + player.posY - screenHeight / 2) + blockWidth) / blockWidth;
 
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && IsCursorOnScreen()) {
             // cout << "\nmouseGridX: " << mouseGridX << "\nmouseGridY: " << mouseGridY;
@@ -386,7 +464,7 @@ int main () {
         BeginDrawing();
         ClearBackground(blackgrowndColor);
 
-        DrawWorld(world, player, worldBlocks);
+        DrawWorld(world, player, worldBlocks/* , ofScreen*/);
         DrawInventory(inventory, isInventoryOpen, selectedInventorySlot);
 
         EndDrawing();
