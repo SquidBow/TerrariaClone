@@ -85,19 +85,7 @@ void createWorld (array<array<int, 1000>, 1000>& world, Player& player) {
     world.at(player.posY/blockWidth - 8).at(player.posX/blockWidth - 3) = 1;
 }
 
-void DrawWorld (const array<array<int, 1000>, 1000>& world, const Player& player, array<Block, 10>& worldBlocks/* , int8_t ofScreen*/) {
-
-    int8_t ofScreen;
-
-    if (player.posX < screenWidht / 2) {
-        ofScreen = -1;
-    }
-    else if (player.posX > world.at(0).size() * blockWidth - (screenWidht / 2) - blockWidth - 1) {
-        ofScreen = 1;
-    }
-    else {
-        ofScreen = 0;
-    }
+void DrawWorld (const array<array<int, 1000>, 1000>& world, const Player& player, array<Block, 10>& worldBlocks, int8_t ofScreen) {
 
     //Player pos / 20 is the player grid position
     int playerGridX;
@@ -272,7 +260,7 @@ int main () {
 
     InitWindow(blocksInARow * blockWidth, blocksInACol * blockWidth, "Terraria clone");
     SetTargetFPS(60);
-    int playerSpeedMod = 5;
+    int playerSpeedMod = 3;
     SetExitKey(KEY_NULL);
 
     while (!WindowShouldClose()) {
@@ -429,6 +417,21 @@ int main () {
             }
         }
 
+        player.posX = predictMoveX;
+        player.posY = predictMoveY;
+
+        int8_t ofScreen;
+
+        if (player.posX < screenWidht / 2) {
+            ofScreen = -1;
+        }
+        else if (player.posX > world.at(0).size() * blockWidth - (screenWidht / 2) - blockWidth - 1) {
+            ofScreen = 1;
+        }
+        else {
+            ofScreen = 0;
+        }
+
         int mouseGridX;
 
         // Get mouse pos
@@ -438,6 +441,8 @@ int main () {
         }
         else if (ofScreen == 1) {
             // cout << "OfScreen is 1" << "\n";
+            mouseGridX = (world.at(0).size() * blockWidth + GetMouseX() - screenWidht) / blockWidth;
+            // cout << "Mouse at: " << mouseGridX << "\n";
         }
         else {
             // cout << "OfScreen is 0" << "\n";
@@ -458,13 +463,10 @@ int main () {
             }
         }
 
-        player.posX = predictMoveX;
-        player.posY = predictMoveY;
-
         BeginDrawing();
         ClearBackground(blackgrowndColor);
 
-        DrawWorld(world, player, worldBlocks/* , ofScreen*/);
+        DrawWorld(world, player, worldBlocks, ofScreen);
         DrawInventory(inventory, isInventoryOpen, selectedInventorySlot);
 
         EndDrawing();
