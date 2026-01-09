@@ -86,18 +86,37 @@ void createWorld (array<array<int, 1000>, 1000>& world, Player& player) {
 
 void DrawWorld (const array<array<int, 1000>, 1000>& world, const Player& player, array<Block, 10>& worldBlocks) {
 
+    bool ofScreenLeft = player.posX < screenWidht / 2;
+
     //Player pos / 20 is the player grid position
-    int playerGridX = player.posX / 20;
+    int playerGridX;
     int playerGridY = player.posY / 20;
     int playerOffcetX = player.posX % 20;
     int playerOffcetY = player.posY % 20;
 
+    if (ofScreenLeft) {
+        playerGridX = (screenWidht / 2) / 20;
+    }
+    else {
+        playerGridX = player.posX / 20;
+    }
 
     //j = y
     for (int j = 0; j < blocksInACol + 1; j ++) {
 
         // i = x
         for (int i = 0; i < blocksInARow + 1; i ++) {
+            int blockPosX;
+
+            if (ofScreenLeft) {
+                blockPosX = i * blockWidth;
+            }
+            else {
+                blockPosX = i * blockWidth - playerOffcetX;
+            }
+
+            int blockPosY = j * blockWidth - playerOffcetY;
+
             //Now take the blocks
             //That is X. Start at some before the player
             //40 blocks, 19 - player(2) - 19;
@@ -107,16 +126,18 @@ void DrawWorld (const array<array<int, 1000>, 1000>& world, const Player& player
             //30 blocks, 14 - player(2) - 14
             int worldY = playerGridY - 14 + j;
 
-            int camX = i * blockWidth - playerOffcetX;
-            int camY = j * blockWidth - playerOffcetY;
 
             Block block = worldBlocks.at(world.at(worldY).at(worldX));
-            DrawRectangle(camX, camY, block.width, block.height, block.color);
-
+            DrawRectangle(blockPosX, blockPosY, block.width, block.height, block.color);
         }
 
-        //Draw player on top
-        DrawRectangle(screenWidht / 2 - blockWidth, screenHeight / 2 - blockWidth * 1.5 + 10, blockWidth * 2, blockWidth * 3, BLACK);
+        if (ofScreenLeft) {
+            DrawRectangle(player.posX - blockWidth, screenHeight / 2 - blockWidth * 1.5 + 10, blockWidth * 2, blockWidth * 3, BLACK);
+        }
+        else {
+            //Draw player on top
+            DrawRectangle(screenWidht / 2 - blockWidth, screenHeight / 2 - blockWidth * 1.5 + 10, blockWidth * 2, blockWidth * 3, BLACK);
+        }
     }
 }
 
@@ -195,7 +216,7 @@ int main () {
     inventory.at(0).at(0) = Block("Dirt", BROWN, false, 20, 20, false, 1);
     inventory.at(0).at(1) = Block("Platform", BROWN, false, 20, 4, true, 3);
 
-    Player player (10020, 9900);
+    Player player (500, 9900);
 
     createWorld(world, player);
 
@@ -207,6 +228,8 @@ int main () {
 
     bool isInventoryOpen = false;
     int selectedInventorySlot = 0;
+
+    bool isLeft = false;
 
     InitWindow(blocksInARow * blockWidth, blocksInACol * blockWidth, "Terraria clone");
     SetTargetFPS(60);
@@ -277,21 +300,6 @@ int main () {
             selectedInventorySlot = 9;
         }
 
-        // Get mouse pos
-        int mouseGridX = ((GetMouseX() + player.posX - screenWidht / 2) + blockWidth) / 20;
-        int mouseGridY = ((GetMouseY() + player.posY - screenHeight / 2) + blockWidth) / 20;
-
-        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && IsCursorOnScreen()) {
-            // cout << "\nmouseGridX: " << mouseGridX << "\nmouseGridY: " << mouseGridY;
-            // cout << "\nplayerPosGridX: " << player.posX << "\nplayerPosGridY: " << player.posY << "\n";
-            if (world.at(mouseGridY).at(mouseGridX) != 0) {
-                world.at(mouseGridY).at(mouseGridX) = 0;
-            }
-            else {
-                // world.at(mouseGridY).at(mouseGridX) = 1;
-                world.at(mouseGridY).at(mouseGridX) = inventory.at(0).at(selectedInventorySlot).id;
-            }
-        }
 
         if (verticalSpeed > 10) {
             verticalSpeed = 10;
@@ -313,7 +321,19 @@ int main () {
         else if (predictMoveX < player.posX) {
             //Look left
             for (int j = player.posY; j < player.posY + blockWidth * 3; j ++) {
-                if (world.at(j / 20).at(predictMoveX / 20) != 0) predictMoveX = (predictMoveX / 20) * 20 + 20;
+                if (world.at(j / 20).at(predictMoveX / 20) != 0) {
+                    predictMoveX = (predictMoveX / 20) * 20 + 20;
+                }
+                else if (predictMoveX - blockWidth < 0) {
+                    predictMoveX = blockWidth;
+                }
+
+                if (player.posX < screenWidht / 2) {
+                    isLeft = true;
+                }
+                else {
+                    isLeft = false;
+                }
             }
         }
 
@@ -333,6 +353,30 @@ int main () {
             for (int j = player.posX; j < player.posX + blockWidth * 2; j ++) {
                 int blockId = world.at(predictMoveY / 20).at(j / 20);
                 if (blockId != 0 && !worldBlocks.at(blockId).passableFromBelow) predictMoveY = (predictMoveY / 20) * 20 + 20;
+            }
+        }
+
+        int mouseGridX;
+
+        // Get mouse pos
+        if (isLeft) {
+            mouseGridX = (GetMouseX() + blockWidth) / 20;
+        }
+        else {
+            mouseGridX = ((GetMouseX() + player.posX - screenWidht / 2) + blockWidth) / 20;
+        }
+
+        int mouseGridY = ((GetMouseY() + player.posY - screenHeight / 2) + blockWidth) / 20;
+
+        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && IsCursorOnScreen()) {
+            // cout << "\nmouseGridX: " << mouseGridX << "\nmouseGridY: " << mouseGridY;
+            // cout << "\nplayerPosGridX: " << player.posX << "\nplayerPosGridY: " << player.posY << "\n";
+            if (world.at(mouseGridY).at(mouseGridX) != 0) {
+                world.at(mouseGridY).at(mouseGridX) = 0;
+            }
+            else {
+                // world.at(mouseGridY).at(mouseGridX) = 1;
+                world.at(mouseGridY).at(mouseGridX) = inventory.at(0).at(selectedInventorySlot).id;
             }
         }
 
