@@ -56,12 +56,6 @@ void FillWorldBlocks (array<Block, 10>& blocColors) {
     blocColors.at(3) = Block("Platform", BROWN, false, blockWidth, 4, true, 3);
 }
 
-// void FillBlockColors (array<Color, 10>& blocColors) {
-//     blocColors [0] = BLUE;
-//     blocColors [1] = BROWN;
-//     blocColors [2] = ORANGE;
-// }
-
 void createWorld (array<array<int, 1000>, 1000>& world, Player& player) {
     // i == y
     for (int i = 500; i < 1000; i ++) {
@@ -151,20 +145,6 @@ void DrawWorld (const array<array<int, 1000>, 1000>& world, const Player& player
             playerX = screenWidht / 2 - blockWidth;
         }
 
-        // cout << "Drawing player at x:" << playerX << "\n";
-        // cout << "Global player x: " << player.posX << "\n";
-
-        // if (ofScreen == -1) {
-        //     DrawRectangle(playerX, screenHeight / 2 - blockWidth * 1.5 + 10, blockWidth * 2, blockWidth * 3, BLACK);
-        // }
-        // else if (ofScreen == 1) {
-        //     DrawRectangle(playerX, screenHeight / 2 - blockWidth * 1.5 + 10, blockWidth * 2, blockWidth * 3, BLACK);
-        // }
-        // else {
-        //     //Draw player on top
-        //     DrawRectangle(playerX, screenHeight / 2 - blockWidth * 1.5 + 10, blockWidth * 2, blockWidth * 3, BLACK);
-        // }
-
         DrawRectangle(playerX, screenHeight / 2 - blockWidth * 1.5 + 10, blockWidth * 2, blockWidth * 3, BLACK);
     }
 }
@@ -233,8 +213,6 @@ void DrawObjectWithPlayerOffcet (int objectPosX, int objectPosY, int width, int 
 
 int main () {
     array<array<int, 1000>, 1000> world {0};
-    // array<Color, 10> blockColors;
-    // FillBlockColors(blockColors);
 
     array<Block, 10> worldBlocks;
     FillWorldBlocks(worldBlocks);
@@ -258,7 +236,8 @@ int main () {
 
     int8_t ofScreen = 0;
 
-
+    // Make a reset mechanic
+    uint8_t pressedDown = 0;
 
     InitWindow(blocksInARow * blockWidth, blocksInACol * blockWidth, "Terraria clone");
     SetTargetFPS(60);
@@ -268,8 +247,16 @@ int main () {
     while (!WindowShouldClose()) {
         verticalSpeed += gravity;
 
+        if (pressedDown > 0) {
+            pressedDown --;
+        }
+
         if (jumpBufferFrames > 0) {
             jumpBufferFrames --;
+        }
+
+        if (IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_W) || IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_W)) {
+            pressedDown = 2;
         }
 
         int predictMoveX = player.posX;
@@ -381,7 +368,9 @@ int main () {
             for (int j = player.posX; j < player.posX + blockWidth * 2; j ++) {
                 int blockId = world.at(predictMoveYDown / blockWidth).at(j / blockWidth);
                 if (blockId != 0) {
-                    predictMoveY = (predictMoveYDown / blockWidth) * blockWidth - blockWidth * 3;
+                    if (!worldBlocks.at(blockId).passableFromBelow || pressedDown == 0) {
+                        predictMoveY = (predictMoveYDown / blockWidth) * blockWidth - blockWidth * 3;
+                    }
                     jumped = false;
                 }
             }
@@ -391,6 +380,8 @@ int main () {
             // 3 blocks. below the player, 1 right and 2 right
             for (int j = player.posX; j < player.posX + blockWidth * 2; j ++) {
                 int blockId = world.at(predictMoveY / blockWidth).at(j / blockWidth);
+                // Makes pass from below
+                // If ID is not 0, so smth and is not passable, we snap to the bottom of the block
                 if (blockId != 0 && !worldBlocks.at(blockId).passableFromBelow) predictMoveY = (predictMoveY / 20) * 20 + 20;
             }
         }
