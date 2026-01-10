@@ -258,6 +258,8 @@ int main () {
 
     int8_t ofScreen = 0;
 
+
+
     InitWindow(blocksInARow * blockWidth, blocksInACol * blockWidth, "Terraria clone");
     SetTargetFPS(60);
     int playerSpeedMod = 3;
@@ -347,54 +349,29 @@ int main () {
             if (predictMoveX > world.at(0).size() * blockWidth - blockWidth * 2 - 1) {
                 predictMoveX = world.at(0).size() * blockWidth - blockWidth * 2 - 1;
             }
+
             else {
                 //Check X colision
                 //Check 4 blocks Y and 3 blocks X
                 int predictMoveXRight = predictMoveX + blockWidth * 2;
                 for (int j = player.posY; j < player.posY + blockWidth * 3; j ++) {
-
-                    if (world.at(j / 20).at(predictMoveXRight / 20) != 0) {
+                    int blockId = world.at(j / 20).at(predictMoveXRight / 20);
+                    if (blockId != 0 && !worldBlocks.at(blockId).passableFromBelow) {
                         predictMoveX = (predictMoveXRight / blockWidth) * blockWidth - blockWidth * 2;
                     }
-                    // else if (predictMoveXRight > world.at(0).size() * blockWidth - 4) {
-                        // cout << "Player on the right" << "\n";
-                        // predictMoveX = world.at(0).size() * blockWidth - blockWidth * 2 - 4;
-                        // predictMoveX = 19950;
-                    // }
                 }
             }
-
-            // if (player.posX > world.at(0).size() * blockWidth - (screenWidht / 2) - blockWidth) {
-            //     ofScreen = 1;
-            // }
-            // else if (player.posX < screenWidht / 2) {
-            //     ofScreen = -1;
-            // }
-            // else {
-            //     ofScreen = 0;
-            // }
         }
         else if (predictMoveX < player.posX) {
             //Look left
             for (int j = player.posY; j < player.posY + blockWidth * 3; j ++) {
-                if (world.at(j / blockWidth).at(predictMoveX / blockWidth) != 0) {
+                int blockId = world.at(j / blockWidth).at(predictMoveX / blockWidth);
+                if (blockId != 0 && !worldBlocks.at(blockId).passableFromBelow) {
                     predictMoveX = (predictMoveX / blockWidth) * blockWidth + blockWidth;
                 }
                 else if (predictMoveX - blockWidth < 0) {
                     predictMoveX = blockWidth;
                 }
-
-                // if (player.posX < screenWidht / 2) {
-                //     ofScreen = -1;
-                // }
-
-                // else if (player.posX + 3 > world.at(0).size() * blockWidth - (screenWidht / 2) - blockWidth) {
-                //     ofScreen = 1;
-                // }
-
-                // else {
-                //     ofScreen = 0;
-                // }
             }
         }
 
@@ -402,7 +379,8 @@ int main () {
             int predictMoveYDown = predictMoveY + blockWidth * 3;
             // 3 blocks. below the player, 1 right and 2 right
             for (int j = player.posX; j < player.posX + blockWidth * 2; j ++) {
-                if (world.at(predictMoveYDown / blockWidth).at(j / blockWidth) != 0) {
+                int blockId = world.at(predictMoveYDown / blockWidth).at(j / blockWidth);
+                if (blockId != 0) {
                     predictMoveY = (predictMoveYDown / blockWidth) * blockWidth - blockWidth * 3;
                     jumped = false;
                 }
