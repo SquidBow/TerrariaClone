@@ -42,10 +42,14 @@ struct Block {
     }
 
     Block() {
-        name = "None";
-        color = BLANK;
+        name = "Nothing";
+        color= BLANK;
+        placeMidAir = true;
         width = 0;
         height = 0;
+        passableFromBelow = true;
+        id = 0;
+        durability = 0;
     }
 };
 
@@ -57,12 +61,12 @@ const int screenHeight = blocksInACol * blockWidth;
 const float gravity = 1;
 const float jumpHeight = 17;
 array<array<Block, 1000>, 1000> world {};
+array<array<Block, 10>, 6> inventory {};
 
-Color blackgrowndColor = BLUE;
-
+Color backGrowndColor = BLUE;
 
 void FillWorldBlocks (array<Block, 10>& worldBlocks) {
-    worldBlocks.at(0) = Block("Nothing", BLUE, true, blockWidth, blockWidth, true, 0, 0);
+    worldBlocks.at(0) = Block("Nothing", BLANK, true, blockWidth, blockWidth, true, 0, 0);
     worldBlocks.at(1) = Block("Player", ORANGE, true, blockWidth, blockWidth, true, 1, 0);
 
     worldBlocks.at(2) = Block("Dirt", BROWN, false, blockWidth, blockWidth, false, 2, 5);
@@ -149,24 +153,24 @@ void DrawWorld (const Player& player, array<Block, 10>& worldBlocks, int8_t ofSc
             // cout << "Offscreen: " << (int)ofScreen << "\n";
             // cout << "Drawing block: " << i << "\n";
         }
-
-        int playerX;
-
-        if (ofScreen == -1) {
-            playerX = player.posX - blockWidth;
-        }
-        else if (ofScreen == 1) {
-            playerX = (player.posX - (world.at(0).size() * blockWidth)) + screenWidht;
-        }
-        else {
-            playerX = screenWidht / 2 - blockWidth;
-        }
-
-        DrawRectangle(playerX, screenHeight / 2 - blockWidth * 1.5 + 10, blockWidth * 2, blockWidth * 3, BLACK);
     }
+
+    int playerX;
+
+    if (ofScreen == -1) {
+        playerX = player.posX - blockWidth;
+    }
+    else if (ofScreen == 1) {
+        playerX = (player.posX - (world.at(0).size() * blockWidth)) + screenWidht;
+    }
+    else {
+        playerX = screenWidht / 2 - blockWidth;
+    }
+
+    DrawRectangle(playerX, screenHeight / 2 - blockWidth * 1.5 + 10, blockWidth * 2, blockWidth * 3, BLACK);
 }
 
-void DrawInventory (array<array<Block, 10>, 6>& inventory, bool isInventoryOpen, int selected) {
+void DrawInventory (bool isInventoryOpen, int selected) {
     int difference = blockWidth * 3;
 
     int posX = blockWidth;
@@ -238,7 +242,11 @@ int main () {
         }
     }
 
-    array<array<Block, 10>, 6> inventory;
+    for (int i = 0; i < inventory.size(); i ++) {
+        for (int j = 0; j < inventory.at(0).size(); j ++) {
+            inventory.at(i).at(j) = worldBlocks.at(0);
+        }
+    }
 
     inventory.at(0).at(0) = worldBlocks.at(2);
     inventory.at(0).at(1) = worldBlocks.at(3);
@@ -412,8 +420,6 @@ int main () {
         player.posX = predictMoveX;
         player.posY = predictMoveY;
 
-        int8_t ofScreen;
-
         if (player.posX < screenWidht / 2) {
             ofScreen = -1;
         }
@@ -447,7 +453,12 @@ int main () {
             // cout << "\nmouseGridX: " << mouseGridX << "\nmouseGridY: " << mouseGridY;
             // cout << "\nplayerPosGridX: " << player.posX << "\nplayerPosGridY: " << player.posY << "\n";
             if (world.at(mouseGridY).at(mouseGridX).id != 0) {
-                world.at(mouseGridY).at(mouseGridX) = worldBlocks.at(0);
+                if (world.at(mouseGridY).at(mouseGridX).durability > 1) {
+                    world.at(mouseGridY).at(mouseGridX).durability --;
+                }
+                else {
+                    world.at(mouseGridY).at(mouseGridX) = worldBlocks.at(0);
+                }
             }
             else {
                 // world.at(mouseGridY).at(mouseGridX) = 1;
@@ -456,10 +467,10 @@ int main () {
         }
 
         BeginDrawing();
-        ClearBackground(blackgrowndColor);
+        ClearBackground(backGrowndColor);
 
         DrawWorld(player, worldBlocks, ofScreen);
-        DrawInventory(inventory, isInventoryOpen, selectedInventorySlot);
+        DrawInventory(isInventoryOpen, selectedInventorySlot);
 
         EndDrawing();
     }
