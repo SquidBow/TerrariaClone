@@ -515,14 +515,18 @@ int main () {
             int predicBlockY = brokenBlock.posY + brokenBlock.velosityY;
 
             if (predicBlockY > brokenBlock.posY) {
-                int predictBlockYDown = predicBlockY + blockWidth;
+                int predictBlockYDown = predicBlockY + brokenBlock.block.height;
                 // 3 blocks. below the player, 1 right and 2 right
                 for (int j = brokenBlock.posX; j < brokenBlock.posX + brokenBlock.block.width; j ++) {
-                    int blockId = world.at(predictBlockYDown / blockWidth).at(brokenBlock.posX / blockWidth).id;
-                    if (blockId != 0) {
-                        cout << "It is less" << "\n";
-                        predicBlockY = (predictBlockYDown / blockWidth) * blockWidth - blockWidth;
-                        // predicBlockY = brokenBlock.posY;;
+                    Block block = world.at(predictBlockYDown / blockWidth).at(brokenBlock.posX / blockWidth);
+                    if (block.id != 0) {
+                        // cout << "It is less" << "\n";
+                        // int sub = brokenBlock.block.height;
+                        // if (block.passableFromBelow) {
+                        //     sub += 6;
+                        // }
+                        predicBlockY = (predictBlockYDown / blockWidth) * blockWidth - brokenBlock.block.height;
+                        // predicBlockY = brokenBlock.posY;
                     }
                 }
             }
