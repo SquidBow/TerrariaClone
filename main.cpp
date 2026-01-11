@@ -57,8 +57,9 @@ Color blackgrowndColor = BLUE;
 
 void FillWorldBlocks (array<Block, 10>& worldBlocks) {
     worldBlocks.at(0) = Block("Nothing", BLUE, true, blockWidth, blockWidth, true, 0, 0);
-    worldBlocks.at(1) = Block("Player", ORANGE, true, blockWidth, blockWidth, true, 2, 0);
-    worldBlocks.at(2) = Block("Dirt", BROWN, false, blockWidth, blockWidth, false, 1, 5);
+    worldBlocks.at(1) = Block("Player", ORANGE, true, blockWidth, blockWidth, true, 1, 0);
+
+    worldBlocks.at(2) = Block("Dirt", BROWN, false, blockWidth, blockWidth, false, 2, 5);
     worldBlocks.at(3) = Block("Platform", BROWN, false, blockWidth, 4, true, 3, 10);
 }
 
@@ -379,8 +380,8 @@ int main () {
                 if (blockId != 0) {
                     if (!worldBlocks.at(blockId).passableFromBelow || pressedDown == 0) {
                         predictMoveY = (predictMoveYDown / blockWidth) * blockWidth - blockWidth * 3;
+                        jumped = false;
                     }
-                    jumped = false;
                 }
             }
         }
