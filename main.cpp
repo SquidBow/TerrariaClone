@@ -1,11 +1,12 @@
 #include "raylib.h"
 #include <array>
 #include <cstdint>
+#include <string>
 #include <iostream>
 #include <tuple>
 
 using namespace std;
-
+bool debug = false;
 
 struct Player {
     public:
@@ -40,7 +41,12 @@ struct Block {
         this->durability = durability;
     }
 
-    Block() {}
+    Block() {
+        name = "None";
+        color = BLANK;
+        width = 0;
+        height = 0;
+    }
 };
 
 const int blocksInARow = 40;
@@ -61,6 +67,10 @@ void FillWorldBlocks (array<Block, 10>& worldBlocks) {
 
     worldBlocks.at(2) = Block("Dirt", BROWN, false, blockWidth, blockWidth, false, 2, 5);
     worldBlocks.at(3) = Block("Platform", BROWN, false, blockWidth, 4, true, 3, 10);
+
+    for (int i = 4; i < worldBlocks.size(); i ++) {
+        worldBlocks.at(i) = worldBlocks.at(0);
+    }
 }
 
 void createWorld (Player& player, array<Block, 10> worldBlocks) {
@@ -132,6 +142,9 @@ void DrawWorld (const Player& player, array<Block, 10>& worldBlocks, int8_t ofSc
 
             Block block = world.at(worldY).at(worldX);
             DrawRectangle(blockPosX, blockPosY, block.width, block.height, block.color);
+            if (block.id > 1 && debug) {
+                DrawText(TextFormat("%d", block.durability), blockPosX, blockPosY + 1, 20, WHITE);
+            }
 
             // cout << "Offscreen: " << (int)ofScreen << "\n";
             // cout << "Drawing block: " << i << "\n";
