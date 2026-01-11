@@ -3,11 +3,12 @@
 #include <cstdint>
 #include <string>
 #include <iostream>
+#include <vector>
 
 using namespace std;
 bool debug = false;
 
-struct Player {
+class Player {
     public:
 
     // Top left corner
@@ -17,7 +18,7 @@ struct Player {
     Player (int posX, int posY) : posX(posX), posY(posY) {}
 };
 
-struct Block {
+class Block {
     public:
 
     string name;
@@ -52,6 +53,26 @@ struct Block {
     }
 };
 
+
+class Entity {
+    public:
+
+    int posX;
+    int posY;
+    float velosityY;
+    Block block;
+    int life = 500;
+
+    Entity (int posX, int posY, float velosityY, Block block) : posX(posX), posY(posY), velosityY(velosityY), block(block) {}
+
+    Entity () {
+        posX = 0;
+        posY = 0;
+        velosityY = 0.0;
+        block = Block();
+    }
+};
+
 const int blocksInARow = 40;
 const int blocksInACol = 30;
 const int blockWidth = 20;
@@ -64,19 +85,15 @@ array<array<Block, 10>, 6> inventory {};
 
 Color backGrowndColor = BLUE;
 
-void FillWorldBlocks (array<Block, 10>& worldBlocks) {
-    worldBlocks.at(0) = Block("Nothing", BLANK, true, blockWidth, blockWidth, true, 0, 0);
-    worldBlocks.at(1) = Block("Player", ORANGE, true, blockWidth, blockWidth, true, 1, 0);
+void FillWorldBlocks (vector<Block>& worldBlocks) {
+    worldBlocks.push_back(Block("Nothing", BLANK, true, blockWidth, blockWidth, true, 0, 0));
+    worldBlocks.push_back(Block("Player", ORANGE, true, blockWidth, blockWidth, true, 1, 0));
 
-    worldBlocks.at(2) = Block("Dirt", BROWN, false, blockWidth, blockWidth, false, 2, 0);
-    worldBlocks.at(3) = Block("Platform", BROWN, false, blockWidth, 4, true, 3, 0);
-
-    for (int i = 4; i < worldBlocks.size(); i ++) {
-        worldBlocks.at(i) = worldBlocks.at(0);
-    }
+    worldBlocks.push_back(Block("Dirt", BROWN, false, blockWidth, blockWidth, false, 2, 0));
+    worldBlocks.push_back(Block("Platform", BROWN, false, blockWidth, 4, true, 3, 0));
 }
 
-void createWorld (Player& player, array<Block, 10> worldBlocks) {
+void createWorld (Player& player,vector<Block>& worldBlocks) {
     // i == y
     for (int i = 500; i < 1000; i ++) {
 
@@ -96,23 +113,26 @@ void createWorld (Player& player, array<Block, 10> worldBlocks) {
     world.at(player.posY/blockWidth - 8).at(player.posX/blockWidth - 3) = worldBlocks.at(2);
 }
 
-void DrawWorld (const Player& player, array<Block, 10>& worldBlocks, int8_t ofScreen) {
+void DrawWorld (const Player& player, vector<Block>& worldBlocks, int8_t ofScreen, vector<Entity> brokenBlocks) {
 
     //Player pos / 20 is the player grid position
-    int playerGridX;
-    int playerGridY = player.posY / blockWidth;
+    int camX;
+    int camY = player.posY;
     int playerOffcetX = player.posX % blockWidth;
     int playerOffcetY = player.posY % blockWidth;
 
     if (ofScreen == -1) {
-        playerGridX = (screenWidht / 2) / blockWidth;
+        camX = (screenWidht / 2);
     }
     else if (ofScreen == 1) {
-        playerGridX = (world.at(0).size() * blockWidth - (screenWidht / 2) - blockWidth * 2) / blockWidth;
+        camX = (world.at(0).size() * blockWidth - (screenWidht / 2) - blockWidth * 2);
     }
     else {
-        playerGridX = player.posX / blockWidth;
+        camX = player.posX;
     }
+
+    cout << "CamX: " << camX << "\n";
+    cout << "CamY: " << camY << "\n";
 
     //j = y
     for (int j = 0; j < blocksInACol + 1; j ++) {
@@ -136,15 +156,16 @@ void DrawWorld (const Player& player, array<Block, 10>& worldBlocks, int8_t ofSc
             //Now take the blocks
             //That is X. Start at some before the player
             //40 blocks, 19 - player(2) - 19;
-            int worldX = playerGridX - 19 + i;
+            int worldX = camX / blockWidth - 19 + i;
 
             //Same for Y
             //30 blocks, 14 - player(2) - 14
-            int worldY = playerGridY - 14 + j;
+            int worldY = camY / blockWidth - 14 + j;
 
 
             Block block = world.at(worldY).at(worldX);
             DrawRectangle(blockPosX, blockPosY, block.width, block.height, block.color);
+
             if (block.id > 1 && debug) {
                 DrawText(TextFormat("%d", block.durability), blockPosX, blockPosY + 1, 20, WHITE);
             }
@@ -152,6 +173,11 @@ void DrawWorld (const Player& player, array<Block, 10>& worldBlocks, int8_t ofSc
             // cout << "Offscreen: " << (int)ofScreen << "\n";
             // cout << "Drawing block: " << i << "\n";
         }
+    }
+
+    for (Entity& brokenBlock : brokenBlocks) {
+        cout << "Drawing entity: " << brokenBlock.block.name << "\nAt X: " << camX - brokenBlock.posX + screenWidht / 2 << "\nAt Y: " << camY - brokenBlock.posY + screenHeight / 2 << "\n\n";
+        DrawRectangle(brokenBlock.posX - camX + screenWidht / 2 - blockWidth, brokenBlock.posY - camY + screenHeight / 2 - blockWidth, brokenBlock.block.width, brokenBlock.block.height, brokenBlock.block.color);
     }
 
     int playerX;
@@ -232,18 +258,20 @@ void DrawObjectWithPlayerOffcet (int objectPosX, int objectPosY, int width, int 
 }
 
 int main () {
-    array<Block, 10> worldBlocks;
+    vector<Block> worldBlocks;
     FillWorldBlocks(worldBlocks);
+
+    vector<Entity> brokenBlocks;
 
     for (int i = 0; i < world.size(); i ++) {
         for (int j = 0; j < world.at(0).size(); j ++) {
-            world.at(i).at(j) = worldBlocks.at(0);
+            world.at(i).at(j) = Block();
         }
     }
 
     for (int i = 0; i < inventory.size(); i ++) {
         for (int j = 0; j < inventory.at(0).size(); j ++) {
-            inventory.at(i).at(j) = worldBlocks.at(0);
+            inventory.at(i).at(j) = Block();
         }
     }
 
@@ -274,7 +302,12 @@ int main () {
     SetExitKey(KEY_NULL);
 
     while (!WindowShouldClose()) {
+        system("clear");
+
         verticalSpeed += gravity;
+
+        int predictMoveX = player.posX;
+        int predictMoveY = player.posY;
 
         if (pressedDown > 0) {
             pressedDown --;
@@ -287,9 +320,6 @@ int main () {
         if (IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_W)/* || IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_W)*/) {
             pressedDown = 2;
         }
-
-        int predictMoveX = player.posX;
-        int predictMoveY = player.posY;
 
         if ((IsKeyPressed(KEY_UP) || IsKeyPressed(KEY_W) || IsKeyPressed(KEY_SPACE)) /*&& !jumped*/) {
             // verticalSpeed = -jumpHeight;
@@ -360,7 +390,6 @@ int main () {
         // cout << "Predicted player posX: " << predictMoveX << "\n";
 
         if (predictMoveX > player.posX) {
-
             // 1000 * 20 = 20000 - 1
             if (predictMoveX > world.at(0).size() * blockWidth - blockWidth * 2 - 1) {
                 predictMoveX = world.at(0).size() * blockWidth - blockWidth * 2 - 1;
@@ -428,8 +457,9 @@ int main () {
             ofScreen = 0;
         }
 
-        int mouseGridX;
         if ((IsMouseButtonPressed(MOUSE_LEFT_BUTTON) || IsMouseButtonDown(MOUSE_LEFT_BUTTON)) && IsCursorOnScreen()) {
+            int mouseGridX;
+
             // Get mouse pos
             if (ofScreen == -1) {
                 // cout << "OfScreen is -1" << "\n";
@@ -455,7 +485,9 @@ int main () {
                     world.at(mouseGridY).at(mouseGridX).durability --;
                 }
                 else {
-                    world.at(mouseGridY).at(mouseGridX) = worldBlocks.at(0);
+                    Block block = world.at(mouseGridY).at(mouseGridX);
+                    world.at(mouseGridY).at(mouseGridX) = Block();
+                    brokenBlocks.push_back(Entity (mouseGridX * blockWidth, mouseGridY * blockWidth, -5, block));
                 }
             }
             else if (plasingBlocks == 1 || plasingBlocks == 0){
@@ -468,10 +500,40 @@ int main () {
             plasingBlocks = 0;
         }
 
+        for (Entity& brokenBlock : brokenBlocks) {
+            // cout << "Broken block X: " << brokenBlock.posX << "\nBroken block Y: " << brokenBlock.posY << "\n";
+
+            brokenBlock.velosityY += gravity;
+
+            if (brokenBlock.velosityY > 5) {
+                brokenBlock.velosityY = 5;
+            }
+            else if (brokenBlock.velosityY < -jumpHeight) {
+                brokenBlock.velosityY = -jumpHeight;
+            }
+
+            int predicBlockY = brokenBlock.posY + brokenBlock.velosityY;
+
+            if (predicBlockY > brokenBlock.posY) {
+                int predictBlockYDown = predicBlockY + blockWidth;
+                // 3 blocks. below the player, 1 right and 2 right
+                for (int j = brokenBlock.posX; j < brokenBlock.posX + brokenBlock.block.width; j ++) {
+                    int blockId = world.at(predictBlockYDown / blockWidth).at(brokenBlock.posX / blockWidth).id;
+                    if (blockId != 0) {
+                        cout << "It is less" << "\n";
+                        predicBlockY = (predictBlockYDown / blockWidth) * blockWidth - blockWidth;
+                        // predicBlockY = brokenBlock.posY;;
+                    }
+                }
+            }
+
+            brokenBlock.posY = predicBlockY;
+        }
+
         BeginDrawing();
         ClearBackground(backGrowndColor);
 
-        DrawWorld(player, worldBlocks, ofScreen);
+        DrawWorld(player, worldBlocks, ofScreen, brokenBlocks);
         DrawInventory(isInventoryOpen, selectedInventorySlot);
 
         EndDrawing();
