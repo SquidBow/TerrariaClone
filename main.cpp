@@ -2,18 +2,10 @@
 #include <array>
 #include <cstdint>
 #include <iostream>
+#include <tuple>
 
 using namespace std;
 
-const int blocksInARow = 40;
-const int blocksInACol = 30;
-const int blockWidth = 20;
-const int screenWidht = blocksInARow * blockWidth;
-const int screenHeight = blocksInACol * blockWidth;
-const float gravity = 1;
-const float jumpHeight = 17;
-
-Color blackgrowndColor = BLUE;
 
 struct Player {
     public:
@@ -35,8 +27,9 @@ struct Block {
     int height;
     bool passableFromBelow;
     int id;
+    int durability;
 
-    Block (string name, Color color, bool placeMidAir, int width, int height, bool passableFromBelow, int id) {
+    Block (string name, Color color, bool placeMidAir, int width, int height, bool passableFromBelow, int id, int durability) {
         this -> name = name;
         this->color = color;
         this->placeMidAir = placeMidAir;
@@ -44,19 +37,32 @@ struct Block {
         this->width = width;
         this->passableFromBelow = passableFromBelow;
         this->id = id;
+        this->durability = durability;
     }
 
     Block() {}
 };
 
-void FillWorldBlocks (array<Block, 10>& blocColors) {
-    blocColors.at(0) = Block("Nothing", BLUE, true, blockWidth, blockWidth, true, 0);
-    blocColors.at(1) = Block("Dirt", BROWN, false, blockWidth, blockWidth, false, 1);
-    blocColors.at(2) = Block("Player", ORANGE, true, blockWidth, blockWidth, true, 2);
-    blocColors.at(3) = Block("Platform", BROWN, false, blockWidth, 4, true, 3);
+const int blocksInARow = 40;
+const int blocksInACol = 30;
+const int blockWidth = 20;
+const int screenWidht = blocksInARow * blockWidth;
+const int screenHeight = blocksInACol * blockWidth;
+const float gravity = 1;
+const float jumpHeight = 17;
+array<array<Block, 1000>, 1000> world {};
+
+Color blackgrowndColor = BLUE;
+
+
+void FillWorldBlocks (array<Block, 10>& worldBlocks) {
+    worldBlocks.at(0) = Block("Nothing", BLUE, true, blockWidth, blockWidth, true, 0, 0);
+    worldBlocks.at(1) = Block("Player", ORANGE, true, blockWidth, blockWidth, true, 2, 0);
+    worldBlocks.at(2) = Block("Dirt", BROWN, false, blockWidth, blockWidth, false, 1, 5);
+    worldBlocks.at(3) = Block("Platform", BROWN, false, blockWidth, 4, true, 3, 10);
 }
 
-void createWorld (array<array<int, 1000>, 1000>& world, Player& player) {
+void createWorld (Player& player, array<Block, 10> worldBlocks) {
     // i == y
     for (int i = 500; i < 1000; i ++) {
 
@@ -64,22 +70,19 @@ void createWorld (array<array<int, 1000>, 1000>& world, Player& player) {
         for (int j = 0; j < 1000; j ++) {
 
             // world [y] [x]
-            world.at(i).at(j) = 1;
+            world.at(i).at(j) = worldBlocks.at(2);
         }
     }
 
 
-    world.at(player.posY/blockWidth).at(player.posX/blockWidth + 3) = 1;
-    world.at(player.posY/blockWidth - 1).at(player.posX/blockWidth + 3) = 1;
-    world.at(player.posY/blockWidth + 1).at(player.posX/blockWidth + 3) = 1;
-
-    world.at(player.posY/blockWidth - 8).at(player.posX/blockWidth + 3) = 1;
-
-
-    world.at(player.posY/blockWidth - 8).at(player.posX/blockWidth - 3) = 1;
+    world.at(player.posY/blockWidth).at(player.posX/blockWidth + 3) = worldBlocks.at(2);
+    world.at(player.posY/blockWidth - 1).at(player.posX/blockWidth + 3) = worldBlocks.at(2);
+    world.at(player.posY/blockWidth + 1).at(player.posX/blockWidth + 3) = worldBlocks.at(2);
+    world.at(player.posY/blockWidth - 8).at(player.posX/blockWidth + 3) = worldBlocks.at(2);
+    world.at(player.posY/blockWidth - 8).at(player.posX/blockWidth - 3) = worldBlocks.at(2);
 }
 
-void DrawWorld (const array<array<int, 1000>, 1000>& world, const Player& player, array<Block, 10>& worldBlocks, int8_t ofScreen) {
+void DrawWorld (const Player& player, array<Block, 10>& worldBlocks, int8_t ofScreen) {
 
     //Player pos / 20 is the player grid position
     int playerGridX;
@@ -126,7 +129,7 @@ void DrawWorld (const array<array<int, 1000>, 1000>& world, const Player& player
             int worldY = playerGridY - 14 + j;
 
 
-            Block block = worldBlocks.at(world.at(worldY).at(worldX));
+            Block block = world.at(worldY).at(worldX);
             DrawRectangle(blockPosX, blockPosY, block.width, block.height, block.color);
 
             // cout << "Offscreen: " << (int)ofScreen << "\n";
@@ -212,19 +215,23 @@ void DrawObjectWithPlayerOffcet (int objectPosX, int objectPosY, int width, int 
 }
 
 int main () {
-    array<array<int, 1000>, 1000> world {0};
-
     array<Block, 10> worldBlocks;
     FillWorldBlocks(worldBlocks);
 
+    for (int i = 0; i < world.size(); i ++) {
+        for (int j = 0; j < world.at(0).size(); j ++) {
+            world.at(i).at(j) = worldBlocks.at(0);
+        }
+    }
+
     array<array<Block, 10>, 6> inventory;
 
-    inventory.at(0).at(0) = Block("Dirt", BROWN, false, blockWidth, blockWidth, false, 1);
-    inventory.at(0).at(1) = Block("Platform", BROWN, false, blockWidth, 4, true, 3);
+    inventory.at(0).at(0) = worldBlocks.at(2);
+    inventory.at(0).at(1) = worldBlocks.at(3);
 
     Player player (19500, 9900);
 
-    createWorld(world, player);
+    createWorld(player, worldBlocks);
 
     char lastDirection = 'n';
     float verticalSpeed = 0;
@@ -238,6 +245,8 @@ int main () {
 
     // Make a reset mechanic
     uint8_t pressedDown = 0;
+
+    // tuple<int, int> lastHitBlockPos;
 
     InitWindow(blocksInARow * blockWidth, blocksInACol * blockWidth, "Terraria clone");
     SetTargetFPS(60);
@@ -255,7 +264,7 @@ int main () {
             jumpBufferFrames --;
         }
 
-        if (IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_W) || IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_W)) {
+        if (IsKeyPressed(KEY_DOWN) || IsKeyPressed(KEY_W)/* || IsKeyDown(KEY_DOWN) || IsKeyDown(KEY_W)*/) {
             pressedDown = 2;
         }
 
@@ -342,7 +351,7 @@ int main () {
                 //Check 4 blocks Y and 3 blocks X
                 int predictMoveXRight = predictMoveX + blockWidth * 2;
                 for (int j = player.posY; j < player.posY + blockWidth * 3; j ++) {
-                    int blockId = world.at(j / 20).at(predictMoveXRight / 20);
+                    int blockId = world.at(j / 20).at(predictMoveXRight / 20).id;
                     if (blockId != 0 && !worldBlocks.at(blockId).passableFromBelow) {
                         predictMoveX = (predictMoveXRight / blockWidth) * blockWidth - blockWidth * 2;
                     }
@@ -352,7 +361,7 @@ int main () {
         else if (predictMoveX < player.posX) {
             //Look left
             for (int j = player.posY; j < player.posY + blockWidth * 3; j ++) {
-                int blockId = world.at(j / blockWidth).at(predictMoveX / blockWidth);
+                int blockId = world.at(j / blockWidth).at(predictMoveX / blockWidth).id;
                 if (blockId != 0 && !worldBlocks.at(blockId).passableFromBelow) {
                     predictMoveX = (predictMoveX / blockWidth) * blockWidth + blockWidth;
                 }
@@ -366,7 +375,7 @@ int main () {
             int predictMoveYDown = predictMoveY + blockWidth * 3;
             // 3 blocks. below the player, 1 right and 2 right
             for (int j = player.posX; j < player.posX + blockWidth * 2; j ++) {
-                int blockId = world.at(predictMoveYDown / blockWidth).at(j / blockWidth);
+                int blockId = world.at(predictMoveYDown / blockWidth).at(j / blockWidth).id;
                 if (blockId != 0) {
                     if (!worldBlocks.at(blockId).passableFromBelow || pressedDown == 0) {
                         predictMoveY = (predictMoveYDown / blockWidth) * blockWidth - blockWidth * 3;
@@ -379,7 +388,7 @@ int main () {
             //Look up
             // 3 blocks. below the player, 1 right and 2 right
             for (int j = player.posX; j < player.posX + blockWidth * 2; j ++) {
-                int blockId = world.at(predictMoveY / blockWidth).at(j / blockWidth);
+                int blockId = world.at(predictMoveY / blockWidth).at(j / blockWidth).id;
                 // Makes pass from below
                 // If ID is not 0, so smth and is not passable, we snap to the bottom of the block
                 if (blockId != 0 && !worldBlocks.at(blockId).passableFromBelow) predictMoveY = (predictMoveY / 20) * 20 + 20;
@@ -423,19 +432,19 @@ int main () {
         if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && IsCursorOnScreen()) {
             // cout << "\nmouseGridX: " << mouseGridX << "\nmouseGridY: " << mouseGridY;
             // cout << "\nplayerPosGridX: " << player.posX << "\nplayerPosGridY: " << player.posY << "\n";
-            if (world.at(mouseGridY).at(mouseGridX) != 0) {
-                world.at(mouseGridY).at(mouseGridX) = 0;
+            if (world.at(mouseGridY).at(mouseGridX).id != 0) {
+                world.at(mouseGridY).at(mouseGridX) = worldBlocks.at(0);
             }
             else {
                 // world.at(mouseGridY).at(mouseGridX) = 1;
-                world.at(mouseGridY).at(mouseGridX) = inventory.at(0).at(selectedInventorySlot).id;
+                world.at(mouseGridY).at(mouseGridX) = inventory.at(0).at(selectedInventorySlot);
             }
         }
 
         BeginDrawing();
         ClearBackground(blackgrowndColor);
 
-        DrawWorld(world, player, worldBlocks, ofScreen);
+        DrawWorld(player, worldBlocks, ofScreen);
         DrawInventory(inventory, isInventoryOpen, selectedInventorySlot);
 
         EndDrawing();
