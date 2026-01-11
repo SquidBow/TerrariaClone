@@ -3,7 +3,6 @@
 #include <cstdint>
 #include <string>
 #include <iostream>
-#include <tuple>
 
 using namespace std;
 bool debug = false;
@@ -69,8 +68,8 @@ void FillWorldBlocks (array<Block, 10>& worldBlocks) {
     worldBlocks.at(0) = Block("Nothing", BLANK, true, blockWidth, blockWidth, true, 0, 0);
     worldBlocks.at(1) = Block("Player", ORANGE, true, blockWidth, blockWidth, true, 1, 0);
 
-    worldBlocks.at(2) = Block("Dirt", BROWN, false, blockWidth, blockWidth, false, 2, 5);
-    worldBlocks.at(3) = Block("Platform", BROWN, false, blockWidth, 4, true, 3, 10);
+    worldBlocks.at(2) = Block("Dirt", BROWN, false, blockWidth, blockWidth, false, 2, 0);
+    worldBlocks.at(3) = Block("Platform", BROWN, false, blockWidth, 4, true, 3, 0);
 
     for (int i = 4; i < worldBlocks.size(); i ++) {
         worldBlocks.at(i) = worldBlocks.at(0);
@@ -267,8 +266,7 @@ int main () {
 
     // Make a reset mechanic
     uint8_t pressedDown = 0;
-
-    // tuple<int, int> lastHitBlockPos;
+    int8_t plasingBlocks = 0;
 
     InitWindow(blocksInARow * blockWidth, blocksInACol * blockWidth, "Terraria clone");
     SetTargetFPS(60);
@@ -431,28 +429,28 @@ int main () {
         }
 
         int mouseGridX;
+        if ((IsMouseButtonPressed(MOUSE_LEFT_BUTTON) || IsMouseButtonDown(MOUSE_LEFT_BUTTON)) && IsCursorOnScreen()) {
+            // Get mouse pos
+            if (ofScreen == -1) {
+                // cout << "OfScreen is -1" << "\n";
+                mouseGridX = (GetMouseX() + blockWidth) / blockWidth;
+            }
+            else if (ofScreen == 1) {
+                // cout << "OfScreen is 1" << "\n";
+                mouseGridX = (world.at(0).size() * blockWidth + GetMouseX() - screenWidht) / blockWidth;
+                // cout << "Mouse at: " << mouseGridX << "\n";
+            }
+            else {
+                // cout << "OfScreen is 0" << "\n";
+                mouseGridX = ((GetMouseX() + player.posX - screenWidht / 2) + blockWidth) / blockWidth;
+            }
 
-        // Get mouse pos
-        if (ofScreen == -1) {
-            // cout << "OfScreen is -1" << "\n";
-            mouseGridX = (GetMouseX() + blockWidth) / blockWidth;
-        }
-        else if (ofScreen == 1) {
-            // cout << "OfScreen is 1" << "\n";
-            mouseGridX = (world.at(0).size() * blockWidth + GetMouseX() - screenWidht) / blockWidth;
-            // cout << "Mouse at: " << mouseGridX << "\n";
-        }
-        else {
-            // cout << "OfScreen is 0" << "\n";
-            mouseGridX = ((GetMouseX() + player.posX - screenWidht / 2) + blockWidth) / blockWidth;
-        }
+            int mouseGridY = ((GetMouseY() + player.posY - screenHeight / 2) + blockWidth) / blockWidth;
 
-        int mouseGridY = ((GetMouseY() + player.posY - screenHeight / 2) + blockWidth) / blockWidth;
-
-        if (IsMouseButtonPressed(MOUSE_LEFT_BUTTON) && IsCursorOnScreen()) {
             // cout << "\nmouseGridX: " << mouseGridX << "\nmouseGridY: " << mouseGridY;
             // cout << "\nplayerPosGridX: " << player.posX << "\nplayerPosGridY: " << player.posY << "\n";
-            if (world.at(mouseGridY).at(mouseGridX).id != 0) {
+            if (world.at(mouseGridY).at(mouseGridX).id != 0 && (plasingBlocks == -1 || plasingBlocks == 0)) {
+                plasingBlocks = -1;
                 if (world.at(mouseGridY).at(mouseGridX).durability > 1) {
                     world.at(mouseGridY).at(mouseGridX).durability --;
                 }
@@ -460,10 +458,14 @@ int main () {
                     world.at(mouseGridY).at(mouseGridX) = worldBlocks.at(0);
                 }
             }
-            else {
+            else if (plasingBlocks == 1 || plasingBlocks == 0){
                 // world.at(mouseGridY).at(mouseGridX) = 1;
+                plasingBlocks = 1;
                 world.at(mouseGridY).at(mouseGridX) = inventory.at(0).at(selectedInventorySlot);
             }
+        }
+        else {
+            plasingBlocks = 0;
         }
 
         BeginDrawing();
